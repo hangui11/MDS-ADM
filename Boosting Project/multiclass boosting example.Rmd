@@ -1,0 +1,83 @@
+---
+title: "Multi-Class Boosting"
+output: html_document
+date: "2025-04-29"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load Required Libraries
+```{r}
+# Uncomment below to install if needed
+# install.packages(c("adabag", "gbm", "caret", "ggplot2"))
+rm(list = ls())
+library(adabag)
+library(gbm)
+library(caret)
+library(ggplot2)
+```
+
+## Load and Split Data (Iris)
+```{r}
+data(iris)
+dataset <- iris
+
+set.seed(456)
+train_index <- createDataPartition(dataset$Species, p = 0.7, list = FALSE)
+train_data <- dataset[train_index, ]
+test_data <- dataset[-train_index, ]
+```
+
+## Train Multi-Class Boosting Models
+### AdaBoost.M1 (Adabag)
+```{r}
+adaboost_model <- boosting(Species ~ ., data = train_data, mfinal = 50)
+```
+
+### Gradient Boosting (GBM)
+```{r}
+train_data_gbm <- train_data
+train_data_gbm$Species <- as.numeric(train_data_gbm$Species) - 1
+
+gbm_model <- train(
+  Species ~ ., 
+  data = train_data,
+  method = "gbm",
+  trControl = trainControl(method = "cv", number = 5),
+  verbose = FALSE
+)
+```
+
+## Evaluate
+
+```{r }
+# AdaBoost
+ada_preds_obj <- predict(adaboost_model, test_data)
+ada_preds <- factor(ada_preds_obj$class, levels = levels(test_data$Species))
+ada_cm <- confusionMatrix(ada_preds, test_data$Species)
+ada_acc <- ada_cm$overall["Accuracy"]
+
+# GBM
+gbm_preds <- predict(gbm_model, newdata = test_data)
+gbm_cm <- confusionMatrix(gbm_preds, test_data$Species)
+gbm_acc <- gbm_cm$overall["Accuracy"]
+
+# Combine into a data frame 
+acc_df <- data.frame(
+  Model = c("AdaBoost.M1", "Gradient Boosting (GBM)"),
+  Accuracy = c(ada_acc, gbm_acc)
+)
+
+ggplot(acc_df, aes(x = Model, y = Accuracy, fill = Model)) +
+  geom_bar(stat = "identity", width = 0.6) +
+  geom_text(aes(label = round(Accuracy, 3)), vjust = -0.5) +
+  ylim(0, 1) +
+  labs(title = "Comparison of Model Accuracies",
+       y = "Accuracy",
+       x = "") +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+

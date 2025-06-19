@@ -1,0 +1,7 @@
+pytorch-tabular
+scikit-learn
+pandas
+numpy
+catboost
+xgboost
+typing-extensions
