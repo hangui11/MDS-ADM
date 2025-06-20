@@ -1,8 +1,5 @@
-Here is a corrected and improved version of your section:
-
----
-
 # Algorithmics for Data Mining
+>NOTE: MDS optative subject
 
 This repository contains three main topics related to **Algorithmics for Data Mining**.
 
